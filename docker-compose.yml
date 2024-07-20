@@ -1,0 +1,38 @@
+version: '3.7'
+services:
+  postgres:
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=postgres
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - 5432:5432
+    networks:
+      - postgrest-backend
+    
+    volumes:
+      - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+
+  server:
+    image: postgrest/postgrest
+    ports:
+      - 3000:3000
+    expose:
+      - 3000
+    environment:
+      - PGRST_DB_URI=postgres://postgres:mysecretpassword@postgres:5432/postgres
+      - PGRST_DB_ANON_ROLE=web_anon
+      - PGRST_DB_SCHEMAS=api
+    networks:
+      - postgrest-backend
+    depends_on:
+      - postgres
+
+networks:
+  postgrest-backend:
+    driver: bridge    
